@@ -76,7 +76,7 @@ $(function () {
                 snapToPlot: 1,
                 symbol: 'diamond',
                 position: {
-                    relativeX: 10,
+                    relativeX: 400,
                     relativeY: 20
                 }
             },
