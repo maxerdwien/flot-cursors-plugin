@@ -19,27 +19,24 @@ Licensed under the MIT license.
         var cursors = [];
         var update = [];
 
+        function createCursor(options) {
+            return mixin(options, {
+                name: options.name || ('unnamed ' + cursors.length),
+                x: 0,
+                y: 0,
+                selected: false,
+                highlighted: false,
+                mode: 'xy',
+                showIntersections: false,
+                showLabel: false,
+                color: 'gray',
+                lineWidth: 1
+            });
+        }
+
         plot.hooks.processOptions.push(function (plot) {
-            plot.getOptions().cursors.forEach(function (cursor) {
-                var currentCursor = {
-                    x: 0,
-                    y: 0,
-                    selected: false,
-                    highlighted: false,
-                    mode: cursor.mode || 'xy',
-                    position: cursor.position,
-                    showIntersections: !!cursor.showIntersections,
-                    showLabel: !!cursor.showLabel,
-                    snapToPlot: cursor.snapToPlot,
-                    symbol: cursor.symbol,
-                    color: cursor.color,
-                    lineWidth: cursor.lineWidth || 1
-                };
-
-                setPosition(plot, currentCursor, cursor.position);
-
-                currentCursor.name = cursor.name || ('unnamed ' + cursors.length);
-                cursors.push(currentCursor);
+            plot.getOptions().cursors.forEach(function (options) {
+                plot.addCursor(options);
             });
         });
 
@@ -47,19 +44,10 @@ Licensed under the MIT license.
             return cursors;
         };
 
-        plot.addCursor = function addCursor(name, mode, color, pos) {
-            var currentCursor = {
-                x: 0,
-                y: 0,
-                selected: false,
-                highlighted: false,
-                mode: mode,
-                color: color,
-                position: pos
-            };
+        plot.addCursor = function addCursor(options) {
+            var currentCursor = createCursor(options);
 
-            currentCursor.name = name || ('unnamed ' + cursors.length);
-            setPosition(plot, currentCursor, pos);
+            setPosition(plot, currentCursor, options.position);
             cursors.push(currentCursor);
 
             plot.triggerRedrawOverlay();
@@ -251,6 +239,8 @@ Licensed under the MIT license.
 
             var intersections = {
                 cursor: cursor.name,
+                x: pos.x,
+                y: pos.y,
                 points: []
             };
 
@@ -296,8 +286,6 @@ Licensed under the MIT license.
 
             return intersections;
         }
-
-
 
         plot.hooks.drawOverlay.push(function (plot, ctx) {
             var i = 0;
@@ -351,6 +339,8 @@ Licensed under the MIT license.
         Object.keys(source).forEach(function (key) {
             destination[key] = source[key];
         });
+
+        return destination;
     }
 
     function setPosition(plot, cursor, pos) {
@@ -375,9 +365,9 @@ Licensed under the MIT license.
                     x: point.x,
                     y: point.y
                 });
+
+                intersections.y = point.y; // update cursor position
             }
-        } else {
-            return cursor.position;
         }
     }
 
@@ -386,7 +376,7 @@ Licensed under the MIT license.
         if (cursor.showLabel) {
             var x = cursor.x + 10;
             var y = cursor.y - 10;
-            ctx.fillStyle = 'darkgray';
+            ctx.fillStyle = cursor.color;
             ctx.fillText(cursor.name, x, y);
         }
 
@@ -434,7 +424,7 @@ Licensed under the MIT license.
             ctx.strokeStyle = cursor.color;
         if (cursor.symbol && plot.drawSymbol && plot.drawSymbol[cursor.symbol]) {
             ctx.fillStyle = 'white';
-            ctx.fillRect(Math.floor(cursor.x) + adj - 4, Math.floor(cursor.y) + adj - 4, 8, 8);
+            ctx.fillRect(Math.floor(cursor.x) + adj - 5, Math.floor(cursor.y) + adj - 5, 10, 10);
             plot.drawSymbol[cursor.symbol](ctx, Math.floor(cursor.x) + adj, Math.floor(cursor.y) + adj, 4, 0);
         } else {
             ctx.fillRect(Math.floor(cursor.x) + adj - 4, Math.floor(cursor.y) + adj - 4, 8, 8);
@@ -456,7 +446,7 @@ Licensed under the MIT license.
         var mouseX = Math.max(0, Math.min(e.pageX - offset.left, plot.width()));
         var mouseY = Math.max(0, Math.min(e.pageY - offset.top, plot.height()));
 
-        return ((mouseX > cursor.x - 4) && (mouseX < cursor.x + 4) && (mouseY > cursor.y - 4) && (mouseY < cursor.y + 4));
+        return ((mouseX > cursor.x - 8) && (mouseX < cursor.x + 8) && (mouseY > cursor.y - 8) && (mouseY < cursor.y + 8));
     }
 
     function mouseOverCursorVerticalLine(e, plot, cursor) {
