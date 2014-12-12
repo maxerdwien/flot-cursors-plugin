@@ -26,11 +26,11 @@ $(function () {
             plot.setData([
                 {
                     data: sin,
-                    label: "sin(x) = -0.00"
+                    label: "sin(x)"
                 },
                 {
                     data: cos,
-                    label: "cos(x) = -0.00"
+                    label: "cos(x)"
                 }
             ]);
 
@@ -43,11 +43,11 @@ $(function () {
     plot = $.plot("#placeholder", [
         {
             data: sin,
-            label: "sin(x) = -0.00"
+            label: "sin(x)"
         },
         {
             data: cos,
-            label: "cos(x) = -0.00"
+            label: "cos(x)"
         }
     ], {
         series: {

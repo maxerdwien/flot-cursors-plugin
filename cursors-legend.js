@@ -26,11 +26,11 @@ $(function () {
             plot.setData([
                 {
                     data: sin,
-                    label: "sin(x) = -0.00"
+                    label: "sin(x)"
                 },
                 {
                     data: cos,
-                    label: "cos(x) = -0.00"
+                    label: "cos(x)"
                 }
             ]);
 
@@ -43,11 +43,11 @@ $(function () {
     plot = $.plot("#placeholder", [
         {
             data: sin,
-            label: "sin(x) = -0.00"
+            label: "sin(x)"
         },
         {
             data: cos,
-            label: "cos(x) = -0.00"
+            label: "cos(x)"
         }
     ], {
         series: {
@@ -59,7 +59,7 @@ $(function () {
             {
                 name: 'Red cursor',
                 mode: 'x',
-                color: 'red',
+                color: '#e00000',
                 showIntersections: false,
                 showLabel: true,
                 symbol: 'triangle',
@@ -71,7 +71,7 @@ $(function () {
             {
                 name: 'Blue cursor',
                 mode: 'xy',
-                color: 'blue',
+                color: '#0000e0',
                 showIntersections: true,
                 snapToPlot: 1,
                 symbol: 'diamond',
@@ -83,7 +83,7 @@ $(function () {
             {
                 name: 'Green cursor',
                 mode: 'y',
-                color: 'green',
+                color: '#008000',
                 showIntersections: true,
                 symbol: 'cross',
                 position: {

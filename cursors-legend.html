@@ -11,12 +11,17 @@
     <script type="text/javascript" src="jqwidgets/jqxcore.js"></script>
     <script type="text/javascript" src="jqwidgets/jqxdata.js"></script>
     <script type="text/javascript" src="jqwidgets/jqxbuttons.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxcheckbox.js"></script>
     <script type="text/javascript" src="jqwidgets/jqxscrollbar.js"></script>
     <script type="text/javascript" src="jqwidgets/jqxmenu.js"></script>
     <script type="text/javascript" src="jqwidgets/jqxgrid.js"></script>
     <script type="text/javascript" src="jqwidgets/jqxgrid.selection.js"></script>
     <script type="text/javascript" src="jqwidgets/jqxnumberinput.js"></script>
     <script type="text/javascript" src="jqwidgets/jqxwindow.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxcolorpicker.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxdropdownbutton.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxlistbox.js"></script>
+    <script type="text/javascript" src="jqwidgets/jqxdropdownlist.js"></script>
 
     <script language="javascript" type="text/javascript" src="jquery.flot.js"></script>
     <script language="javascript" type="text/javascript" src="jquery.flot.symbol.js"></script>
@@ -26,7 +31,7 @@
     <script type="text/javascript">
         var initLegend = function () {
             var cursorCounter = 1;
-            var cursorColors = ['', 'navy', 'magenta', 'indigo', 'GoldenRod', 'pink', 'salmon']
+            var cursorColors = ['#FF0000', '#000080', '#FF00FF', '#4B0082', '#DAA520', '#FFC0CB', '#FA8072']
 
             var plot = window.myPlot;
             // prepare the data
@@ -37,9 +42,43 @@
                 data.push({
                     cursorname: cursor.name,
                     x: 0,
-                    y: 0
+                    y: 0,
                 });
             });
+
+            var cursorModes = [
+                "xy",
+                "x",
+                "y",
+            ];
+
+            var shapes = [
+                'square',
+                'diamond',
+                'triangle',
+                'cross'
+            ];
+
+            var snapTo = [
+                'none',
+                'plot 1',
+                'plot 2'
+            ];
+
+
+            function getTextElementByColor(color) {
+                if (color == 'transparent' || color.hex == "") {
+                    return $("<div style='text-shadow: none; position: relative; margin: 2px; height: 26px;'><span style='top: 2px; position: relative; font-size: 16px;'>transparent</span></div>");
+                }
+                var element = $("<div style='text-shadow: none; height: 26px; margin: 2px; position: relative;'><span style='top: 2px; position: relative; font-size: 16px;'>#" + color.hex + "</span></div>");
+                var nThreshold = 105;
+                var bgDelta = (color.r * 0.299) + (color.g * 0.587) + (color.b * 0.114);
+                var foreColor = (255 - bgDelta < nThreshold) ? 'Black' : 'White';
+                element.css('color', foreColor);
+                element.css('background', "#" + color.hex);
+                element.addClass('jqx-rc-all');
+                return element;
+            }
 
             var source = {
                 localdata: data,
@@ -62,41 +101,25 @@
                     // synchronize with the server - send update command
                     // call commit with parameter true if the synchronization with the server is successful 
                     // and with parameter false if the synchronization failed.
-                    var name = plot.getCursors()[rowid].name;
-
-                    if (rowdata.cursorname != name)
-                        plot.setCursor(plot.getCursors()[rowid], {
-                            name: rowdata.cursorname
-                        });
-
                     commit(true);
                 },
                 deleterow: function (rowid, commit) {
                     // synchronize with the server - send delete command
                     // call commit with parameter true if the synchronization with the server is successful 
                     // and with parameter false if the synchronization failed.
-                    plot.removeCursor(plot.getCursors()[rowid]);
                     commit(true);
                 },
                 addrow: function (rowid, rowdata, position, commit) {
                     // synchronize with the server - send delete command
                     // call commit with parameter true if the synchronization with the server is successful 
                     // and with parameter false if the synchronization failed.
-                    plot.addCursor({
-                        position: {
-                            relativeX: rowdata.x,
-                            relativeY: rowdata.y
-                        },
-                        showLabel: true,
-                        color: rowdata.color
-                    });
                     commit(true);
                 }
             };
 
             // initialize the input fields.
             $("#cursorname").addClass('jqx-input');
-            $("#cursorname").width(250);
+            $("#cursorname").width(200);
             $("#cursorname").height(23);
 
             var dataAdapter = new $.jqx.dataAdapter(source);
@@ -158,27 +181,45 @@
 
                     // get the clicked row's data and initialize the input fields.
                     var dataRecord = $("#jqxgrid").jqxGrid('getrowdata', editrow);
+
+                    var cursorData = plot.getCursors()[editrow]
                     $("#cursorname").val(dataRecord.cursorname);
-                    /*
-                    $("#x").jqxNumberInput({
-                        decimal: dataRecord.x
-                    });
-                    $("#y").jqxNumberInput({
-                        decimal: dataRecord.y
-                    });
-                    */
+                    $("#dropDownButton").jqxDropDownButton('setContent', getTextElementByColor(new $.jqx.color({
+                        hex: cursorData.color.substring(1)
+                    })));
+
+                    $("#jqxdropdownlist").jqxDropDownList('selectItem', cursorData.mode);
+                    $("#jqxshapedropdownlist").jqxDropDownList('selectItem', cursorData.symbol);
+                    $("#jqxsnapdropdownlist").jqxDropDownList('selectItem', (cursorData.snapToPlot !== undefined) ? 'plot ' + (cursorData.snapToPlot + 1) : 'none');
+                    $('#jqxcheckbox1').val(cursorData.showLabel);
+                    $('#jqxcheckbox2').val(cursorData.showIntersections);
+
                     // show the popup window.
                     $("#popupWindow").jqxWindow('show');
                 } else if ($.trim($(args).text()) == "Add Cursor") {
-                    $("#jqxgrid").jqxGrid('addrow', null, {
-                        cursorname: 'Cursor ' + cursorCounter,
-                        x: 33 + cursorCounter * 10,
-                        y: 44 + cursorCounter * 10,
-                        color: cursorColors[cursorCounter++]
+                    var x = 33 + cursorCounter * 10;
+                    var y = 44 + cursorCounter * 10;
+                    var name = 'Cursor ' + cursorCounter;
+                    plot.addCursor({
+                        name: name,
+                        position: {
+                            relativeX: x,
+                            relativeY: y
+                        },
+                        showLabel: true,
+                        color: cursorColors[cursorCounter]
                     });
+                    $("#jqxgrid").jqxGrid('addrow', null, {
+                        cursorname: name,
+                        x: x,
+                        y: y,
+                    });
+
+                    cursorCounter++;
                 } else {
                     var rowid = $("#jqxgrid").jqxGrid('getrowid', rowindex);
                     $("#jqxgrid").jqxGrid('deleterow', rowid);
+                    plot.removeCursor(plot.getCursors()[rowid]);
                 }
             });
 
@@ -195,7 +236,8 @@
 
             // initialize the popup window and buttons.
             $("#popupWindow").jqxWindow({
-                width: 400,
+                width: 300,
+                height: 300,
                 resizable: false,
                 isModal: true,
                 autoOpen: false,
@@ -203,17 +245,84 @@
                 modalOpacity: 0.01
             });
             $("#Cancel").jqxButton({});
-            $("#Save").jqxButton({});
+            $("#Apply").jqxButton({});
+            $("#jqxcheckbox1").jqxCheckBox({
+                //width: 120,
+                height: 25
+            });
+            $("#jqxcheckbox2").jqxCheckBox({
+                //width: 120,
+                height: 25
+            });
+
+            $("#colorPicker").on('colorchange', function (event) {
+                $("#dropDownButton").jqxDropDownButton('setContent', getTextElementByColor(event.args.color));
+            });
+
+            $("#dropDownButton").jqxDropDownButton({
+                animationType: 'none',
+                width: '100%',
+                dropDownHeight: 250,
+                height: 30
+            });
+
+            $("#colorPicker").jqxColorPicker({
+                color: "ffaabb",
+                colorMode: 'hue',
+                width: '100%',
+                height: 242
+            });
+
+            $("#dropDownButton").jqxDropDownButton('setContent', getTextElementByColor(new $.jqx.color({
+                hex: "ffaabb"
+            })));
+
+            $("#jqxdropdownlist").jqxDropDownList({
+                source: cursorModes,
+                selectedIndex: 0,
+                width: '200px',
+                height: '25px'
+            });
+
+            $("#jqxshapedropdownlist").jqxDropDownList({
+                source: shapes,
+                selectedIndex: 0,
+                width: '200px',
+                height: '25px'
+            });
+
+            $("#jqxsnapdropdownlist").jqxDropDownList({
+                source: snapTo,
+                selectedIndex: 0,
+                width: '200px',
+                height: '25px'
+            });
 
             // update the edited row when the user clicks the 'Save' button.
-            $("#Save").click(function () {
-                if (editrow >= 0) {
-                    var row = $("#jqxgrid").jqxGrid('getrowdata', editrow);
-                    row.cursorname = $("#cursorname").val();
-                    var rowid = $("#jqxgrid").jqxGrid('getrowid', editrow);
-                    $('#jqxgrid').jqxGrid('updaterow', rowid, row);
-                    $("#popupWindow").jqxWindow('hide');
-                }
+            $("#Apply").click(function () {
+                var row = $("#jqxgrid").jqxGrid('getrowdata', editrow);
+                row.cursorname = $("#cursorname").val();
+                var mode = $('#jqxdropdownlist').val();
+                var shape = $('#jqxshapedropdownlist').val();
+                var color = $('#dropDownButton').val();
+                var rowid = $("#jqxgrid").jqxGrid('getrowid', editrow);
+                var snapToId = $("#jqxsnapdropdownlist").jqxDropDownList('getSelectedItem').index;
+                var showLabel = $('#jqxcheckbox1').val();
+                var showIntersections = $('#jqxcheckbox2').val();
+
+                $('#jqxgrid').jqxGrid('updaterow', rowid, row);
+
+                plot.setCursor(plot.getCursors()[rowid], {
+                    name: row.cursorname,
+                    mode: mode,
+                    color: color,
+                    showLabel: showLabel,
+                    showIntersections: showIntersections,
+                    symbol: shape,
+                    snapToPlot: [undefined, 0, 1][snapToId]
+                });
+
+                $("#popupWindow").jqxWindow('hide');
             });
 
             $("#placeholder").bind("cursorupdates", function (event, cursordata) {
@@ -250,19 +359,65 @@
                 <div style="margin-top: 10px;" id="cellendeditevent"></div>
             </div>
             <div id="popupWindow">
-                <div>Edit</div>
+                <div>Edit cursor</div>
                 <div style="overflow: hidden;">
                     <table>
                         <tr>
-                            <td align="right">Cursor Name:</td>
+                            <td align="right">Name</td>
                             <td align="left">
                                 <input id="cursorname" />
                             </td>
                         </tr>
                         <tr>
+                            <td align="right">
+                                Color
+                            </td>
+                            <td align="left">
+                                <div id="dropDownButton">
+                                    <div id="colorPicker">
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right">
+                                Mode
+                            </td>
+                            <td align="left">
+                                <div id='jqxdropdownlist'>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right">
+                                Shape
+                            </td>
+                            <td align="left">
+                                <div id='jqxshapedropdownlist'>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right">
+                                Snap To
+                            </td>
+                            <td align="left">
+                                <div id='jqxsnapdropdownlist'>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="right">
+                            </td>
+                            <td align="left">
+                                <div id='jqxcheckbox1'>Show Label</div>
+                                <div id='jqxcheckbox2'>Show Intersections</div>
+                            </td>
+                        </tr>
+                        <tr>
                             <td align="right"></td>
                             <td style="padding-top: 10px;" align="right">
-                                <input style="margin-right: 5px;" type="button" id="Save" value="Save" />
+                                <input style="margin-right: 5px;" type="button" id="Apply" value="Apply" />
                                 <input id="Cancel" type="button" value="Cancel" />
                             </td>
                         </tr>
@@ -280,7 +435,7 @@
         <p>
             <input id="checkbox" type="checkbox" name="Dynamic data" value="0" checked>Dynamic chart data
         </p>
-        <p>This is an example of how you can use jqWidgets to create a cursors legend. Right click on the cursor legend to add, edit and delete cursors</p>
+        <p>This is an example of how you can use jqWidgets to create a cursors legend. Right click on the cursor legend to add, edit delete cursors</p>
     </div>
 </body>
 
